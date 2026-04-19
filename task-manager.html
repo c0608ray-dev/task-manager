@@ -277,6 +277,13 @@ body {
 }
 
 .task-checkbox {
+  /* button のデフォルトスタイルをリセット */
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  outline: none;
+  padding: 0;
+  /* チェックボックス本体 */
   width: 24px; height: 24px;
   border-radius: 7px;
   border: 2px solid var(--border);
@@ -289,6 +296,7 @@ body {
   transition: background 0.15s, border-color 0.15s;
   margin-top: 1px;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .task-checkbox.checked {
   background: var(--green);
@@ -298,7 +306,11 @@ body {
 .task-checkbox.pop {
   animation: checkPop 0.25s ease;
 }
-.task-checkbox svg { display: none; }
+/* SVG に pointer-events: none を設定 — SVG をタップしても確実に親ボタンへ伝播 */
+.task-checkbox svg {
+  display: none;
+  pointer-events: none;
+}
 .task-checkbox.checked svg { display: block; }
 
 .task-title {
@@ -1149,7 +1161,7 @@ function renderTasks() {
 function createTaskEl(task) {
   const item = document.createElement('div');
   item.className = 'task-item' + (task.done ? ' is-done' : '');
-  item.dataset.id = task.id;
+  item.dataset.id = String(task.id); // 必ず文字列でセット（型不一致防止）
 
   const hasMemo = task.memo && task.memo.trim().length > 0;
   const dueBadge = task.dueDate
@@ -1158,11 +1170,11 @@ function createTaskEl(task) {
 
   item.innerHTML = `
     <div class="task-top">
-      <div class="task-checkbox ${task.done ? 'checked' : ''}" onclick="toggleDone('${task.id}')">
+      <button type="button" class="task-checkbox ${task.done ? 'checked' : ''}" onclick="toggleDone('${task.id}')">
         <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </div>
+      </button>
       <div class="task-title ${task.done ? 'done-text' : ''}">${escapeHtml(task.title)}</div>
       <button class="task-delete" onclick="deleteTask('${task.id}')" title="削除">✕</button>
     </div>
@@ -1189,7 +1201,8 @@ function escapeHtml(str) {
 
 // ── タスク操作 ──
 function toggleDone(id) {
-  const task = appData.tasks.find(t => t.id === id);
+  // IDの型が数値でも文字列でも一致させる
+  const task = appData.tasks.find(t => String(t.id) === String(id));
   if (!task) return;
   task.done = !task.done;
 
@@ -1201,7 +1214,7 @@ function toggleDone(id) {
 
     // アニメーション付きで状態切り替え
     checkbox.classList.remove('pop');
-    void checkbox.offsetWidth; // reflow
+    void checkbox.offsetWidth; // アニメーション再起動のためのreflow
     checkbox.classList.add('pop');
 
     if (task.done) {
@@ -1213,10 +1226,10 @@ function toggleDone(id) {
       title.classList.remove('done-text');
       item.classList.remove('is-done');
     }
-
-    // チェックマークのSVG表示
-    const svg = checkbox.querySelector('svg');
-    if (svg) svg.style.display = task.done ? 'block' : 'none';
+    // SVGの表示はCSSクラスが制御 — inline styleは設定しない（CSS優先）
+  } else {
+    // DOM要素が見つからない場合は安全のため全再描画にフォールバック
+    renderTasks();
   }
 
   // 統計のみ更新（全再描画なし）
