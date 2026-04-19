@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>タスク管理 | 川島AI</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="タスク管理">
+<meta name="theme-color" content="#ffffff">
+<style>
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e2e6ea;
+  --text: #1a202c;
+  --text2: #64748b;
+  --text3: #94a3b8;
+
+  --high: #ef4444;
+  --high-bg: #fff5f5;
+  --high-border: #fecaca;
+  --high-badge: #fee2e2;
+
+  --mid: #f59e0b;
+  --mid-bg: #fffbf0;
+  --mid-border: #fde68a;
+  --mid-badge: #fef3c7;
+
+  --check: #3b82f6;
+  --check-bg: #eff6ff;
+  --check-border: #bfdbfe;
+  --check-badge: #dbeafe;
+
+  --daily: #6b7280;
+  --daily-bg: #f9fafb;
+  --daily-border: #e5e7eb;
+  --daily-badge: #f3f4f6;
+
+  --green: #10b981;
+  --green-bg: #ecfdf5;
+
+  --purple: #6366f1;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Helvetica Neue', 'BIZ UDPGothic', 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  min-height: 100vh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── ヘッダー ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.header-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+.date-badge {
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+/* ── メインコンテンツ ── */
+.main {
+  padding: 14px 14px 80px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── ステータスバー ── */
+.status-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+.stat-card.done .stat-num { color: var(--green); }
+
+/* ── インポートエリア ── */
+.import-section {
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.import-section:hover, .import-section.dragover {
+  border-color: var(--check);
+  background: var(--check-bg);
+}
+.import-section input[type="file"] { display: none; }
+.import-icon { font-size: 28px; margin-bottom: 6px; }
+.import-label { font-size: 14px; color: var(--text2); font-weight: 500; }
+.import-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+/* ── アクションボタン群 ── */
+.action-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-export {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+.btn-export:hover { opacity: 0.9; }
+.btn-reset {
+  background: var(--surface);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-reset:hover { background: #f1f5f9; }
+.btn-add {
+  background: var(--surface);
+  color: var(--check);
+  border: 1.5px solid var(--check-border);
+  width: 100%;
+  margin-bottom: 12px;
+}
+.btn-add:hover { background: var(--check-bg); }
+
+/* ── セクションヘッダー ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px 10px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-top: 12px;
+}
+.section-header:first-child { margin-top: 0; }
+.section-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+/* 優先度別カラー */
+.sec-high .section-header  { background: var(--high-bg);   border: 1px solid var(--high-border);  color: var(--high);  border-bottom: none; }
+.sec-mid  .section-header  { background: var(--mid-bg);    border: 1px solid var(--mid-border);   color: var(--mid);   border-bottom: none; }
+.sec-check .section-header { background: var(--check-bg);  border: 1px solid var(--check-border); color: var(--check); border-bottom: none; }
+.sec-daily .section-header { background: var(--daily-bg);  border: 1px solid var(--daily-border); color: var(--daily); border-bottom: none; }
+
+.sec-high  .section-badge  { background: var(--high-badge);  color: var(--high);  }
+.sec-mid   .section-badge  { background: var(--mid-badge);   color: var(--mid);   }
+.sec-check .section-badge  { background: var(--check-badge); color: var(--check); }
+.sec-daily .section-badge  { background: var(--daily-badge); color: var(--daily); }
+
+/* ── タスクカード ── */
+.task-list {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.sec-high  .task-list { border-color: var(--high-border);  }
+.sec-mid   .task-list { border-color: var(--mid-border);   }
+.sec-check .task-list { border-color: var(--check-border); }
+.sec-daily .task-list { border-color: var(--daily-border); }
+
+.task-item {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s, opacity 0.25s;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item.is-done {
+  background: #fafbfc;
+  opacity: 0.62;
+}
+
+.task-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+/* ── カスタムチェックボックス ── */
+@keyframes checkPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  80%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.task-checkbox {
+  /* button のデフォルトスタイルをリセット */
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  outline: none;
+  padding: 0;
+  /* チェックボックス本体 */
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 1px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.task-checkbox.checked {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.task-checkbox.pop {
+  animation: checkPop 0.25s ease;
+}
+/* SVG に pointer-events: none を設定 — SVG をタップしても確実に親ボタンへ伝播 */
+.task-checkbox svg {
+  display: none;
+  pointer-events: none;
+}
+.task-checkbox.checked svg { display: block; }
+
+.task-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+  flex: 1;
+  word-break: break-all;
+  transition: color 0.2s;
+}
+.task-title.done-text {
+  text-decoration: line-through;
+  color: var(--text3);
+}
+
+.task-delete {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  transition: background 0.1s, color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.task-delete:hover { background: #fee2e2; color: var(--high); }
+
+/* ── 予定日バッジ ── */
+.task-due-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--purple);
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-top: 7px;
+  margin-left: 35px;
+}
+
+/* メモ欄 */
+.task-memo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text3);
+  cursor: pointer;
+  margin-top: 8px;
+  margin-left: 35px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+.task-memo-toggle:hover { color: var(--text2); }
+.task-memo-toggle.has-memo { color: var(--check); border-color: var(--check-border); background: var(--check-bg); }
+
+.task-memo-area {
+  display: none;
+  margin-top: 8px;
+  margin-left: 35px;
+}
+.task-memo-area.open { display: block; }
+
+.task-memo {
+  width: 100%;
+  min-height: 72px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+.task-memo:focus { border-color: var(--check); background: var(--surface); }
+.task-memo::placeholder { color: var(--text3); }
+
+/* タスク追加フォーム */
+.add-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.add-form.open { display: block; }
+.add-form-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.add-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  margin-bottom: 5px;
+  display: block;
+}
+.add-inp {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.add-inp:focus { border-color: var(--check); }
+.add-select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 12px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.add-select:focus { border-color: var(--check); }
+.add-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-save-task {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-cancel-task {
+  background: var(--bg);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 空状態 */
+.empty-tasks {
+  padding: 20px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+/* ── フラッシュメッセージ ── */
+.flash {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a202c;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+.flash.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── プログレスバー ── */
+.progress-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 7px;
+  font-weight: 600;
+}
+.progress-bar-bg {
+  background: var(--bg);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  transition: width 0.4s ease;
+}
+
+/* ── 日付ヘッダー ── */
+.date-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.date-main { font-size: 14px; font-weight: 700; color: var(--text); }
+.date-id { font-size: 11px; color: var(--text3); }
+
+/* ════════════════════════════════
+   ── 月間カレンダー ──
+════════════════════════════════ */
+.cal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cal-header:active { background: var(--bg); }
+
+.cal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cal-filter-active {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--purple);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.cal-toggle-icon {
+  font-size: 11px;
+  color: var(--text3);
+  transition: transform 0.2s;
+  line-height: 1;
+}
+.cal-toggle-icon.open { transform: rotate(180deg); }
+
+.cal-body {
+  display: none;
+  padding: 0 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.cal-body.open { display: block; }
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 2px 8px;
+}
+.cal-month-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.cal-nav-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+}
+.cal-nav-btn:active { background: var(--border); }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 3px;
+}
+.cal-wd {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  padding: 5px 0 3px;
+}
+.cal-wd.sun { color: #ef4444; }
+.cal-wd.sat { color: #3b82f6; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+  gap: 1px;
+}
+.cal-day:hover { background: var(--bg); }
+.cal-day:active { background: var(--border); }
+.cal-day.empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.cal-day-num {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.cal-day.day-sun .cal-day-num { color: #ef4444; }
+.cal-day.day-sat .cal-day-num { color: #3b82f6; }
+
+.cal-day.today .cal-day-num {
+  background: var(--check);
+  color: #fff !important;
+  font-weight: 700;
+}
+.cal-day.selected .cal-day-num {
+  background: var(--purple);
+  color: #fff !important;
+  font-weight: 700;
+}
+.cal-day.today.selected .cal-day-num {
+  background: var(--purple);
+}
+
+.cal-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--check);
+  border-radius: 50%;
+  display: block;
+}
+.cal-day.selected .cal-dot { background: #c7d2fe; }
+
+.cal-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.cal-legend-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--check);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.cal-today-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--check);
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.cal-clear-btn {
+  margin-left: auto;
+  background: #fef2f2;
+  color: var(--high);
+  border: 1px solid var(--high-border);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+}
+.cal-clear-btn:active { background: var(--high-badge); }
+
+/* ── フィルターバナー ── */
+.filter-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.filter-banner-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple);
+  flex: 1;
+}
+.filter-banner-clear {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.filter-banner-clear:active { opacity: 0.8; }
+
+/* ── モバイル対応 ── */
+@media (max-width: 480px) {
+  .main { padding: 12px 10px 80px; }
+  .status-bar { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .stat-num { font-size: 19px; }
+  .stat-label { font-size: 9px; }
+  .cal-day-num { font-size: 12px; width: 26px; height: 26px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-row">
+    <div class="header-left">
+      <div class="logo-icon">📋</div>
+      <div>
+        <div class="header-title">タスク管理</div>
+        <div class="header-sub">川島AI · Task Manager</div>
+      </div>
+    </div>
+    <div class="date-badge" id="headerDate">読み込み中...</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ステータスバー -->
+  <div class="status-bar">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">合計</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statHigh" style="color:var(--high)">0</div>
+      <div class="stat-label">🔴高</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statPending">0</div>
+      <div class="stat-label">未完了</div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-label">✅完了</div>
+    </div>
+  </div>
+
+  <!-- プログレスバー -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>進捗</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- 月間カレンダー -->
+  <div class="cal-card" id="calCard">
+    <div class="cal-header" onclick="toggleCalendar()">
+      <div class="cal-header-left">
+        <span>📅 月間カレンダー</span>
+        <span class="cal-filter-active" id="calFilterBadge" style="display:none">絞り込み中</span>
+      </div>
+      <span class="cal-toggle-icon open" id="calToggleIcon">▾</span>
+    </div>
+    <div class="cal-body open" id="calBody">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <button class="cal-nav-btn" onclick="nextMonth()">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-wd sun">日</div>
+        <div class="cal-wd">月</div>
+        <div class="cal-wd">火</div>
+        <div class="cal-wd">水</div>
+        <div class="cal-wd">木</div>
+        <div class="cal-wd">金</div>
+        <div class="cal-wd sat">土</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-footer">
+        <span class="cal-today-label">今</span><span>今日</span>
+        <span style="margin-left:8px;display:flex;align-items:center;gap:4px;"><span class="cal-legend-dot"></span>タスクあり</span>
+        <button class="cal-clear-btn" id="calClearBtn" onclick="clearCalendarFilter()" style="display:none">✕ 解除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSONインポート -->
+  <div class="import-section" id="importSection" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".json">
+    <div class="import-icon">📂</div>
+    <div class="import-label">JSONファイルを読み込む</div>
+    <div class="import-sub">タップまたはファイルをドロップ</div>
+  </div>
+
+  <!-- 日付・エクスポート -->
+  <div class="date-section" id="dateSection" style="display:none">
+    <div>
+      <div class="date-main" id="dateMain">—</div>
+      <div class="date-id" id="dateId">ID: —</div>
+    </div>
+    <div style="font-size:12px;color:var(--text3)">読み込み済み</div>
+  </div>
+
+  <!-- アクションボタン -->
+  <div class="action-bar">
+    <button class="btn btn-export" onclick="exportJSON()">📤 JSONエクスポート</button>
+    <button class="btn btn-reset" onclick="resetAll()">🔄 リセット</button>
+  </div>
+
+  <!-- タスク追加ボタン -->
+  <button class="btn btn-add" onclick="toggleAddForm()">＋ タスクを追加</button>
+
+  <!-- タスク追加フォーム -->
+  <div class="add-form" id="addForm">
+    <div class="add-form-title">新規タスクを追加</div>
+    <input class="add-inp" type="text" id="newTaskTitle" placeholder="タスク内容を入力..." maxlength="200">
+    <label class="add-form-label" for="newTaskDate">📅 予定日（任意）</label>
+    <input class="add-inp" type="date" id="newTaskDate" style="margin-bottom:10px">
+    <select class="add-select" id="newTaskPriority">
+      <option value="high">🔴 高優先</option>
+      <option value="mid" selected>🟡 中優先</option>
+      <option value="check">🔵 要確認</option>
+      <option value="daily">📆 毎日</option>
+    </select>
+    <div class="add-btn-row">
+      <button class="btn-save-task" onclick="addTask()">追加する</button>
+      <button class="btn-cancel-task" onclick="toggleAddForm()">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- フィルターバナー -->
+  <div class="filter-banner" id="filterBanner" style="display:none">
+    <span class="filter-banner-text" id="filterBannerText">📅 日付絞り込み中</span>
+    <button class="filter-banner-clear" onclick="clearCalendarFilter()">✕ 解除</button>
+  </div>
+
+  <!-- タスクリスト -->
+  <div id="taskContainer"></div>
+
+</div>
+
+<!-- フラッシュメッセージ -->
+<div class="flash" id="flash"></div>
+
+<script>
+// ── データ管理 ──
+let appData = { date: '', tasks: [] };
+let idCounter = 100;
+
+const PRIORITY_CONFIG = {
+  high:  { label: '🔴 高優先', sectionClass: 'sec-high',  order: 0 },
+  mid:   { label: '🟡 中優先', sectionClass: 'sec-mid',   order: 1 },
+  check: { label: '🔵 要確認', sectionClass: 'sec-check', order: 2 },
+  daily: { label: '📆 毎日',   sectionClass: 'sec-daily', order: 3 },
+};
+
+// ── カレンダー状態 ──
+let calendarDate = new Date();
+let selectedCalendarDay = null; // YYYY-MM-DD or null
+let calOpen = true;
+
+// ── 初期化 ──
+document.addEventListener('DOMContentLoaded', () => {
+  updateHeaderDate();
+  renderCalendar();
+  renderTasks();
+
+  // ファイル入力
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) importJSON(e.target.files[0]);
+  });
+
+  // ドラッグ&ドロップ
+  const importSection = document.getElementById('importSection');
+  importSection.addEventListener('dragover', e => { e.preventDefault(); importSection.classList.add('dragover'); });
+  importSection.addEventListener('dragleave', () => importSection.classList.remove('dragover'));
+  importSection.addEventListener('drop', e => {
+    e.preventDefault();
+    importSection.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) importJSON(e.dataTransfer.files[0]);
+  });
+});
+
+function updateHeaderDate() {
+  const now = new Date();
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  const str = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]})`;
+  document.getElementById('headerDate').textContent = str;
+}
+
+// ── JSONインポート ──
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.tasks || !Array.isArray(data.tasks)) throw new Error('tasksが見つかりません');
+      appData = data;
+      const maxId = Math.max(0, ...data.tasks.map(t => parseInt(t.id) || 0));
+      idCounter = maxId + 1;
+      renderTasks();
+      renderCalendar();
+      showDateSection(data.date || '');
+      showFlash('✅ JSONを読み込みました');
+    } catch (err) {
+      showFlash('❌ 読み込み失敗：' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function showDateSection(dateStr) {
+  document.getElementById('importSection').style.display = 'none';
+  const ds = document.getElementById('dateSection');
+  ds.style.display = 'flex';
+  document.getElementById('dateMain').textContent = dateStr ? `📅 ${dateStr}` : '日付なし';
+  document.getElementById('dateId').textContent = `タスク数: ${appData.tasks.length}件`;
+}
+
+// ── タスク追加フォーム ──
+let addFormOpen = false;
+function toggleAddForm() {
+  addFormOpen = !addFormOpen;
+  document.getElementById('addForm').classList.toggle('open', addFormOpen);
+  if (addFormOpen) {
+    document.getElementById('newTaskTitle').focus();
+    // カレンダーで日付が選択中なら自動セット
+    if (selectedCalendarDay) {
+      document.getElementById('newTaskDate').value = selectedCalendarDay;
+    }
+  }
+}
+
+function addTask() {
+  const title = document.getElementById('newTaskTitle').value.trim();
+  if (!title) { showFlash('⚠️ タスク内容を入力してください'); return; }
+  const priority = document.getElementById('newTaskPriority').value;
+  const dueDate = document.getElementById('newTaskDate').value || '';
+  const newTask = {
+    id: String(idCounter++),
+    priority,
+    title,
+    done: false,
+    memo: '',
+    dueDate
+  };
+  appData.tasks.push(newTask);
+  document.getElementById('newTaskTitle').value = '';
+  document.getElementById('newTaskDate').value = '';
+  addFormOpen = false;
+  document.getElementById('addForm').classList.remove('open');
+  renderTasks();
+  renderCalendar();
+  if (!document.getElementById('dateSection').style.display || document.getElementById('dateSection').style.display === 'none') {
+    document.getElementById('importSection').style.display = 'none';
+    showDateSection(getTodayStr());
+  }
+  showFlash('✅ タスクを追加しました');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && addFormOpen && document.activeElement.id === 'newTaskTitle') addTask();
+});
+
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateBadge(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const y = parseInt(parts[0]), m = parseInt(parts[1]), d = parseInt(parts[2]);
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  const dt = new Date(y, m - 1, d);
+  return `${m}/${d}(${dayNames[dt.getDay()]})`;
+}
+
+// ── タスク描画 ──
+function renderTasks() {
+  const container = document.getElementById('taskContainer');
+  container.innerHTML = '';
+
+  const priorities = ['high', 'mid', 'check', 'daily'];
+  let totalCount = 0;
+  let doneCount = 0;
+  let highCount = 0;
+  let anyTaskShown = false;
+
+  priorities.forEach(p => {
+    let tasks = appData.tasks.filter(t => t.priority === p);
+
+    // カレンダーフィルター適用
+    if (selectedCalendarDay) {
+      tasks = tasks.filter(t => t.dueDate === selectedCalendarDay);
+    }
+
+    const cfg = PRIORITY_CONFIG[p];
+    const doneInSection = tasks.filter(t => t.done).length;
+
+    // 全体の統計（フィルターなし）
+    const allTasks = appData.tasks.filter(t => t.priority === p);
+    totalCount += allTasks.length;
+    doneCount += allTasks.filter(t => t.done).length;
+    if (p === 'high') highCount = allTasks.filter(t => !t.done).length;
+
+    // フィルター中は空セクションをスキップ
+    if (selectedCalendarDay && tasks.length === 0) return;
+
+    anyTaskShown = true;
+
+    const section = document.createElement('div');
+    section.className = cfg.sectionClass;
+    section.innerHTML = `
+      <div class="section-header">
+        <span>${cfg.label}</span>
+        <span class="section-badge">${doneInSection}/${tasks.length}</span>
+      </div>
+    `;
+
+    const taskList = document.createElement('div');
+    taskList.className = 'task-list';
+
+    if (tasks.length === 0) {
+      taskList.innerHTML = '<div class="empty-tasks">タスクなし</div>';
+    } else {
+      tasks.forEach(task => {
+        taskList.appendChild(createTaskEl(task));
+      });
+    }
+
+    section.appendChild(taskList);
+    container.appendChild(section);
+  });
+
+  // フィルター中でタスクが0件の場合
+  if (selectedCalendarDay && !anyTaskShown) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = 'text-align:center;padding:30px 20px;color:var(--text3);font-size:13px;line-height:1.7';
+    emptyMsg.innerHTML = `📭 この日のタスクはありません<br><small>＋タスクを追加して予定日を設定してください</small>`;
+    container.appendChild(emptyMsg);
+  }
+
+  // 統計更新
+  document.getElementById('statTotal').textContent = totalCount;
+  document.getElementById('statHigh').textContent = highCount;
+  document.getElementById('statPending').textContent = totalCount - doneCount;
+  document.getElementById('statDone').textContent = doneCount;
+  document.getElementById('progressText').textContent = `${doneCount} / ${totalCount}`;
+  const pct = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  if (document.getElementById('dateId')) {
+    document.getElementById('dateId').textContent = `タスク数: ${totalCount}件`;
+  }
+
+  // フィルターバナー更新
+  updateFilterBanner();
+}
+
+function createTaskEl(task) {
+  const item = document.createElement('div');
+  item.className = 'task-item' + (task.done ? ' is-done' : '');
+  item.dataset.id = String(task.id); // 必ず文字列でセット（型不一致防止）
+
+  const hasMemo = task.memo && task.memo.trim().length > 0;
+  const dueBadge = task.dueDate
+    ? `<span class="task-due-badge">📅 ${escapeHtml(formatDateBadge(task.dueDate))}</span>`
+    : '';
+
+  item.innerHTML = `
+    <div class="task-top">
+      <button type="button" class="task-checkbox ${task.done ? 'checked' : ''}" onclick="toggleDone('${task.id}')">
+        <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="task-title ${task.done ? 'done-text' : ''}">${escapeHtml(task.title)}</div>
+      <button class="task-delete" onclick="deleteTask('${task.id}')" title="削除">✕</button>
+    </div>
+    <div>
+      ${dueBadge}
+      <span class="task-memo-toggle ${hasMemo ? 'has-memo' : ''}" onclick="toggleMemo('${task.id}')">
+        💬 ${hasMemo ? 'メモあり' : 'メモ追加'}
+      </span>
+      <div class="task-memo-area ${hasMemo ? 'open' : ''}" id="memoArea_${task.id}">
+        <textarea class="task-memo" placeholder="メモ・コメントを入力..." oninput="updateMemo('${task.id}', this.value)">${escapeHtml(task.memo || '')}</textarea>
+      </div>
+    </div>
+  `;
+  return item;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── タスク操作 ──
+function toggleDone(id) {
+  // IDの型が数値でも文字列でも一致させる
+  const task = appData.tasks.find(t => String(t.id) === String(id));
+  if (!task) return;
+  task.done = !task.done;
+
+  // DOM直接更新（スムーズなアニメーションのため）
+  const item = document.querySelector(`.task-item[data-id="${id}"]`);
+  if (item) {
+    const checkbox = item.querySelector('.task-checkbox');
+    const title = item.querySelector('.task-title');
+
+    // アニメーション付きで状態切り替え
+    checkbox.classList.remove('pop');
+    void checkbox.offsetWidth; // アニメーション再起動のためのreflow
+    checkbox.classList.add('pop');
+
+    if (task.done) {
+      checkbox.classList.add('checked');
+      title.classList.add('done-text');
+      item.classList.add('is-done');
+    } else {
+      checkbox.classList.remove('checked');
+      title.classList.remove('done-text');
+      item.classList.remove('is-done');
+    }
+    // SVGの表示はCSSクラスが制御 — inline styleは設定しない（CSS優先）
+  } else {
+    // DOM要素が見つからない場合は安全のため全再描画にフォールバック
+    renderTasks();
+  }
+
+  // 統計のみ更新（全再描画なし）
+  updateStats();
+}
+
+function updateStats() {
+  let totalCount = 0, doneCount = 0, highCount = 0;
+  appData.tasks.forEach(t => {
+    totalCount++;
+    if (t.done) doneCount++;
+    if (t.priority === 'high' && !t.done) highCount++;
+  });
+  document.getElementById('statTotal').textContent = totalCount;
+  document.getElementById('statHigh').textContent = highCount;
+  document.getElementById('statPending').textContent = totalCount - doneCount;
+  document.getElementById('statDone').textContent = doneCount;
+  document.getElementById('progressText').textContent = `${doneCount} / ${totalCount}`;
+  const pct = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateMemo(id, value) {
+  const task = appData.tasks.find(t => t.id === id);
+  if (task) task.memo = value;
+  const toggle = document.querySelector(`[data-id="${id}"] .task-memo-toggle`);
+  if (toggle) {
+    const hasMemo = value.trim().length > 0;
+    toggle.textContent = `💬 ${hasMemo ? 'メモあり' : 'メモ追加'}`;
+    toggle.classList.toggle('has-memo', hasMemo);
+  }
+}
+
+function toggleMemo(id) {
+  const area = document.getElementById('memoArea_' + id);
+  if (!area) return;
+  const isOpen = area.classList.toggle('open');
+  if (isOpen) {
+    const textarea = area.querySelector('textarea');
+    if (textarea) textarea.focus();
+  }
+}
+
+function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  appData.tasks = appData.tasks.filter(t => t.id !== id);
+  renderTasks();
+  renderCalendar();
+  showFlash('🗑 タスクを削除しました');
+}
+
+// ── JSONエクスポート ──
+function exportJSON() {
+  // メモをDOMから同期
+  appData.tasks.forEach(task => {
+    const area = document.getElementById('memoArea_' + task.id);
+    if (area) {
+      const ta = area.querySelector('textarea');
+      if (ta) task.memo = ta.value;
+    }
+  });
+
+  const today = getTodayStr();
+  const exportData = {
+    date: appData.date || today,
+    exported_at: new Date().toISOString(),
+    tasks: appData.tasks
+  };
+
+  const json = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tasks_${today}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showFlash('📤 エクスポートしました');
+}
+
+// ── リセット ──
+function resetAll() {
+  if (!confirm('全データをリセットしますか？\n（現在のタスクは消えます）')) return;
+  appData = { date: '', tasks: [] };
+  idCounter = 100;
+  selectedCalendarDay = null;
+  document.getElementById('importSection').style.display = '';
+  document.getElementById('dateSection').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  renderTasks();
+  renderCalendar();
+  showFlash('🔄 リセットしました');
+}
+
+// ── フラッシュメッセージ ──
+let flashTimer = null;
+function showFlash(msg) {
+  const el = document.getElementById('flash');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (flashTimer) clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════
+// ── カレンダー機能 ──
+// ════════════════════════════════
+
+function toggleCalendar() {
+  calOpen = !calOpen;
+  document.getElementById('calBody').classList.toggle('open', calOpen);
+  document.getElementById('calToggleIcon').classList.toggle('open', calOpen);
+}
+
+function prevMonth() {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
+  renderCalendar();
+}
+
+function nextMonth() {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const todayStr = getTodayStr();
+
+  document.getElementById('calMonthLabel').textContent = `${year}年${month + 1}月`;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // タスクの日付ごとの件数を集計（未完了のみドット表示）
+  const taskDates = {};
+  appData.tasks.forEach(t => {
+    if (t.dueDate) {
+      if (!taskDates[t.dueDate]) taskDates[t.dueDate] = 0;
+      taskDates[t.dueDate]++;
+    }
+  });
+
+  // 空白セル（月初の曜日調整）
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-day empty';
+    grid.appendChild(empty);
+  }
+
+  // 日付セル
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayOfWeek = (firstDay + d - 1) % 7; // 0=Sun, 6=Sat
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === selectedCalendarDay;
+    const hasTasks = taskDates[dateStr] && taskDates[dateStr] > 0;
+
+    let classes = 'cal-day';
+    if (isToday) classes += ' today';
+    if (isSelected) classes += ' selected';
+    if (dayOfWeek === 0) classes += ' day-sun';
+    if (dayOfWeek === 6) classes += ' day-sat';
+
+    const cell = document.createElement('div');
+    cell.className = classes;
+    cell.innerHTML = `<span class="cal-day-num">${d}</span>${hasTasks ? '<span class="cal-dot"></span>' : ''}`;
+    cell.addEventListener('click', () => selectCalendarDay(dateStr));
+    grid.appendChild(cell);
+  }
+
+  // クリアボタン表示
+  document.getElementById('calClearBtn').style.display = selectedCalendarDay ? 'block' : 'none';
+  document.getElementById('calFilterBadge').style.display = selectedCalendarDay ? 'inline-flex' : 'none';
+}
+
+function selectCalendarDay(dateStr) {
+  if (selectedCalendarDay === dateStr) {
+    // 同じ日をタップ → フィルター解除
+    selectedCalendarDay = null;
+    showFlash('📅 絞り込みを解除しました');
+  } else {
+    selectedCalendarDay = dateStr;
+    const parts = dateStr.split('-');
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    showFlash(`📅 ${parseInt(parts[1])}/${parseInt(parts[2])}(${dayNames[dt.getDay()]}) に絞り込み`);
+  }
+  renderCalendar();
+  renderTasks();
+}
+
+function clearCalendarFilter() {
+  selectedCalendarDay = null;
+  renderCalendar();
+  renderTasks();
+  showFlash('📅 絞り込みを解除しました');
+}
+
+function updateFilterBanner() {
+  const banner = document.getElementById('filterBanner');
+  const bannerText = document.getElementById('filterBannerText');
+  if (selectedCalendarDay) {
+    const parts = selectedCalendarDay.split('-');
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    bannerText.textContent = `📅 ${parseInt(parts[0])}年${parseInt(parts[1])}月${parseInt(parts[2])}日(${dayNames[dt.getDay()]}) のタスク`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
