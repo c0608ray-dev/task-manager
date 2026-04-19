@@ -39,6 +39,8 @@
 
   --green: #10b981;
   --green-bg: #ecfdf5;
+
+  --purple: #6366f1;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -252,10 +254,13 @@ body {
 .task-item {
   padding: 13px 14px;
   border-bottom: 1px solid var(--border);
-  transition: background 0.1s;
+  transition: background 0.2s, opacity 0.25s;
 }
 .task-item:last-child { border-bottom: none; }
-.task-item.is-done { background: #fafbfc; }
+.task-item.is-done {
+  background: #fafbfc;
+  opacity: 0.62;
+}
 
 .task-top {
   display: flex;
@@ -263,7 +268,14 @@ body {
   gap: 11px;
 }
 
-/* カスタムチェックボックス */
+/* ── カスタムチェックボックス ── */
+@keyframes checkPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  80%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
 .task-checkbox {
   width: 24px; height: 24px;
   border-radius: 7px;
@@ -274,7 +286,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: background 0.15s, border-color 0.15s;
   margin-top: 1px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -282,6 +294,9 @@ body {
   background: var(--green);
   border-color: var(--green);
   color: #fff;
+}
+.task-checkbox.pop {
+  animation: checkPop 0.25s ease;
 }
 .task-checkbox svg { display: none; }
 .task-checkbox.checked svg { display: block; }
@@ -293,6 +308,7 @@ body {
   line-height: 1.5;
   flex: 1;
   word-break: break-all;
+  transition: color 0.2s;
 }
 .task-title.done-text {
   text-decoration: line-through;
@@ -312,6 +328,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .task-delete:hover { background: #fee2e2; color: var(--high); }
+
+/* ── 予定日バッジ ── */
+.task-due-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--purple);
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-top: 7px;
+  margin-left: 35px;
+}
 
 /* メモ欄 */
 .task-memo-toggle {
@@ -368,6 +400,13 @@ body {
 }
 .add-form.open { display: block; }
 .add-form-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.add-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  margin-bottom: 5px;
+  display: block;
+}
 .add-inp {
   width: 100%;
   background: var(--bg);
@@ -497,12 +536,257 @@ body {
 .date-main { font-size: 14px; font-weight: 700; color: var(--text); }
 .date-id { font-size: 11px; color: var(--text3); }
 
+/* ════════════════════════════════
+   ── 月間カレンダー ──
+════════════════════════════════ */
+.cal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cal-header:active { background: var(--bg); }
+
+.cal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cal-filter-active {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--purple);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.cal-toggle-icon {
+  font-size: 11px;
+  color: var(--text3);
+  transition: transform 0.2s;
+  line-height: 1;
+}
+.cal-toggle-icon.open { transform: rotate(180deg); }
+
+.cal-body {
+  display: none;
+  padding: 0 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.cal-body.open { display: block; }
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 2px 8px;
+}
+.cal-month-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.cal-nav-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+}
+.cal-nav-btn:active { background: var(--border); }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 3px;
+}
+.cal-wd {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  padding: 5px 0 3px;
+}
+.cal-wd.sun { color: #ef4444; }
+.cal-wd.sat { color: #3b82f6; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+  gap: 1px;
+}
+.cal-day:hover { background: var(--bg); }
+.cal-day:active { background: var(--border); }
+.cal-day.empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.cal-day-num {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.cal-day.day-sun .cal-day-num { color: #ef4444; }
+.cal-day.day-sat .cal-day-num { color: #3b82f6; }
+
+.cal-day.today .cal-day-num {
+  background: var(--check);
+  color: #fff !important;
+  font-weight: 700;
+}
+.cal-day.selected .cal-day-num {
+  background: var(--purple);
+  color: #fff !important;
+  font-weight: 700;
+}
+.cal-day.today.selected .cal-day-num {
+  background: var(--purple);
+}
+
+.cal-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--check);
+  border-radius: 50%;
+  display: block;
+}
+.cal-day.selected .cal-dot { background: #c7d2fe; }
+
+.cal-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.cal-legend-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--check);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.cal-today-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--check);
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.cal-clear-btn {
+  margin-left: auto;
+  background: #fef2f2;
+  color: var(--high);
+  border: 1px solid var(--high-border);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+}
+.cal-clear-btn:active { background: var(--high-badge); }
+
+/* ── フィルターバナー ── */
+.filter-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.filter-banner-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple);
+  flex: 1;
+}
+.filter-banner-clear {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.filter-banner-clear:active { opacity: 0.8; }
+
 /* ── モバイル対応 ── */
 @media (max-width: 480px) {
   .main { padding: 12px 10px 80px; }
   .status-bar { grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .stat-num { font-size: 19px; }
   .stat-label { font-size: 9px; }
+  .cal-day-num { font-size: 12px; width: 26px; height: 26px; }
 }
 </style>
 </head>
@@ -555,6 +839,39 @@ body {
     </div>
   </div>
 
+  <!-- 月間カレンダー -->
+  <div class="cal-card" id="calCard">
+    <div class="cal-header" onclick="toggleCalendar()">
+      <div class="cal-header-left">
+        <span>📅 月間カレンダー</span>
+        <span class="cal-filter-active" id="calFilterBadge" style="display:none">絞り込み中</span>
+      </div>
+      <span class="cal-toggle-icon open" id="calToggleIcon">▾</span>
+    </div>
+    <div class="cal-body open" id="calBody">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <button class="cal-nav-btn" onclick="nextMonth()">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-wd sun">日</div>
+        <div class="cal-wd">月</div>
+        <div class="cal-wd">火</div>
+        <div class="cal-wd">水</div>
+        <div class="cal-wd">木</div>
+        <div class="cal-wd">金</div>
+        <div class="cal-wd sat">土</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-footer">
+        <span class="cal-today-label">今</span><span>今日</span>
+        <span style="margin-left:8px;display:flex;align-items:center;gap:4px;"><span class="cal-legend-dot"></span>タスクあり</span>
+        <button class="cal-clear-btn" id="calClearBtn" onclick="clearCalendarFilter()" style="display:none">✕ 解除</button>
+      </div>
+    </div>
+  </div>
+
   <!-- JSONインポート -->
   <div class="import-section" id="importSection" onclick="document.getElementById('fileInput').click()">
     <input type="file" id="fileInput" accept=".json">
@@ -585,6 +902,8 @@ body {
   <div class="add-form" id="addForm">
     <div class="add-form-title">新規タスクを追加</div>
     <input class="add-inp" type="text" id="newTaskTitle" placeholder="タスク内容を入力..." maxlength="200">
+    <label class="add-form-label" for="newTaskDate">📅 予定日（任意）</label>
+    <input class="add-inp" type="date" id="newTaskDate" style="margin-bottom:10px">
     <select class="add-select" id="newTaskPriority">
       <option value="high">🔴 高優先</option>
       <option value="mid" selected>🟡 中優先</option>
@@ -595,6 +914,12 @@ body {
       <button class="btn-save-task" onclick="addTask()">追加する</button>
       <button class="btn-cancel-task" onclick="toggleAddForm()">キャンセル</button>
     </div>
+  </div>
+
+  <!-- フィルターバナー -->
+  <div class="filter-banner" id="filterBanner" style="display:none">
+    <span class="filter-banner-text" id="filterBannerText">📅 日付絞り込み中</span>
+    <button class="filter-banner-clear" onclick="clearCalendarFilter()">✕ 解除</button>
   </div>
 
   <!-- タスクリスト -->
@@ -617,9 +942,15 @@ const PRIORITY_CONFIG = {
   daily: { label: '📆 毎日',   sectionClass: 'sec-daily', order: 3 },
 };
 
+// ── カレンダー状態 ──
+let calendarDate = new Date();
+let selectedCalendarDay = null; // YYYY-MM-DD or null
+let calOpen = true;
+
 // ── 初期化 ──
 document.addEventListener('DOMContentLoaded', () => {
   updateHeaderDate();
+  renderCalendar();
   renderTasks();
 
   // ファイル入力
@@ -653,11 +984,10 @@ function importJSON(file) {
       const data = JSON.parse(e.target.result);
       if (!data.tasks || !Array.isArray(data.tasks)) throw new Error('tasksが見つかりません');
       appData = data;
-      // idカウンター更新
       const maxId = Math.max(0, ...data.tasks.map(t => parseInt(t.id) || 0));
       idCounter = maxId + 1;
-      // メモエリア状態リセット
       renderTasks();
+      renderCalendar();
       showDateSection(data.date || '');
       showFlash('✅ JSONを読み込みました');
     } catch (err) {
@@ -680,25 +1010,35 @@ let addFormOpen = false;
 function toggleAddForm() {
   addFormOpen = !addFormOpen;
   document.getElementById('addForm').classList.toggle('open', addFormOpen);
-  if (addFormOpen) document.getElementById('newTaskTitle').focus();
+  if (addFormOpen) {
+    document.getElementById('newTaskTitle').focus();
+    // カレンダーで日付が選択中なら自動セット
+    if (selectedCalendarDay) {
+      document.getElementById('newTaskDate').value = selectedCalendarDay;
+    }
+  }
 }
 
 function addTask() {
   const title = document.getElementById('newTaskTitle').value.trim();
   if (!title) { showFlash('⚠️ タスク内容を入力してください'); return; }
   const priority = document.getElementById('newTaskPriority').value;
+  const dueDate = document.getElementById('newTaskDate').value || '';
   const newTask = {
     id: String(idCounter++),
     priority,
     title,
     done: false,
-    memo: ''
+    memo: '',
+    dueDate
   };
   appData.tasks.push(newTask);
   document.getElementById('newTaskTitle').value = '';
+  document.getElementById('newTaskDate').value = '';
   addFormOpen = false;
   document.getElementById('addForm').classList.remove('open');
   renderTasks();
+  renderCalendar();
   if (!document.getElementById('dateSection').style.display || document.getElementById('dateSection').style.display === 'none') {
     document.getElementById('importSection').style.display = 'none';
     showDateSection(getTodayStr());
@@ -715,6 +1055,16 @@ function getTodayStr() {
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 }
 
+function formatDateBadge(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const y = parseInt(parts[0]), m = parseInt(parts[1]), d = parseInt(parts[2]);
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  const dt = new Date(y, m - 1, d);
+  return `${m}/${d}(${dayNames[dt.getDay()]})`;
+}
+
 // ── タスク描画 ──
 function renderTasks() {
   const container = document.getElementById('taskContainer');
@@ -724,15 +1074,29 @@ function renderTasks() {
   let totalCount = 0;
   let doneCount = 0;
   let highCount = 0;
+  let anyTaskShown = false;
 
   priorities.forEach(p => {
-    const tasks = appData.tasks.filter(t => t.priority === p);
-    const cfg = PRIORITY_CONFIG[p];
+    let tasks = appData.tasks.filter(t => t.priority === p);
 
+    // カレンダーフィルター適用
+    if (selectedCalendarDay) {
+      tasks = tasks.filter(t => t.dueDate === selectedCalendarDay);
+    }
+
+    const cfg = PRIORITY_CONFIG[p];
     const doneInSection = tasks.filter(t => t.done).length;
-    totalCount += tasks.length;
-    doneCount += doneInSection;
-    if (p === 'high') highCount = tasks.filter(t => !t.done).length;
+
+    // 全体の統計（フィルターなし）
+    const allTasks = appData.tasks.filter(t => t.priority === p);
+    totalCount += allTasks.length;
+    doneCount += allTasks.filter(t => t.done).length;
+    if (p === 'high') highCount = allTasks.filter(t => !t.done).length;
+
+    // フィルター中は空セクションをスキップ
+    if (selectedCalendarDay && tasks.length === 0) return;
+
+    anyTaskShown = true;
 
     const section = document.createElement('div');
     section.className = cfg.sectionClass;
@@ -758,6 +1122,14 @@ function renderTasks() {
     container.appendChild(section);
   });
 
+  // フィルター中でタスクが0件の場合
+  if (selectedCalendarDay && !anyTaskShown) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = 'text-align:center;padding:30px 20px;color:var(--text3);font-size:13px;line-height:1.7';
+    emptyMsg.innerHTML = `📭 この日のタスクはありません<br><small>＋タスクを追加して予定日を設定してください</small>`;
+    container.appendChild(emptyMsg);
+  }
+
   // 統計更新
   document.getElementById('statTotal').textContent = totalCount;
   document.getElementById('statHigh').textContent = highCount;
@@ -766,7 +1138,12 @@ function renderTasks() {
   document.getElementById('progressText').textContent = `${doneCount} / ${totalCount}`;
   const pct = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('dateId').textContent = `タスク数: ${totalCount}件`;
+  if (document.getElementById('dateId')) {
+    document.getElementById('dateId').textContent = `タスク数: ${totalCount}件`;
+  }
+
+  // フィルターバナー更新
+  updateFilterBanner();
 }
 
 function createTaskEl(task) {
@@ -775,6 +1152,9 @@ function createTaskEl(task) {
   item.dataset.id = task.id;
 
   const hasMemo = task.memo && task.memo.trim().length > 0;
+  const dueBadge = task.dueDate
+    ? `<span class="task-due-badge">📅 ${escapeHtml(formatDateBadge(task.dueDate))}</span>`
+    : '';
 
   item.innerHTML = `
     <div class="task-top">
@@ -787,6 +1167,7 @@ function createTaskEl(task) {
       <button class="task-delete" onclick="deleteTask('${task.id}')" title="削除">✕</button>
     </div>
     <div>
+      ${dueBadge}
       <span class="task-memo-toggle ${hasMemo ? 'has-memo' : ''}" onclick="toggleMemo('${task.id}')">
         💬 ${hasMemo ? 'メモあり' : 'メモ追加'}
       </span>
@@ -811,13 +1192,56 @@ function toggleDone(id) {
   const task = appData.tasks.find(t => t.id === id);
   if (!task) return;
   task.done = !task.done;
-  renderTasks();
+
+  // DOM直接更新（スムーズなアニメーションのため）
+  const item = document.querySelector(`.task-item[data-id="${id}"]`);
+  if (item) {
+    const checkbox = item.querySelector('.task-checkbox');
+    const title = item.querySelector('.task-title');
+
+    // アニメーション付きで状態切り替え
+    checkbox.classList.remove('pop');
+    void checkbox.offsetWidth; // reflow
+    checkbox.classList.add('pop');
+
+    if (task.done) {
+      checkbox.classList.add('checked');
+      title.classList.add('done-text');
+      item.classList.add('is-done');
+    } else {
+      checkbox.classList.remove('checked');
+      title.classList.remove('done-text');
+      item.classList.remove('is-done');
+    }
+
+    // チェックマークのSVG表示
+    const svg = checkbox.querySelector('svg');
+    if (svg) svg.style.display = task.done ? 'block' : 'none';
+  }
+
+  // 統計のみ更新（全再描画なし）
+  updateStats();
+}
+
+function updateStats() {
+  let totalCount = 0, doneCount = 0, highCount = 0;
+  appData.tasks.forEach(t => {
+    totalCount++;
+    if (t.done) doneCount++;
+    if (t.priority === 'high' && !t.done) highCount++;
+  });
+  document.getElementById('statTotal').textContent = totalCount;
+  document.getElementById('statHigh').textContent = highCount;
+  document.getElementById('statPending').textContent = totalCount - doneCount;
+  document.getElementById('statDone').textContent = doneCount;
+  document.getElementById('progressText').textContent = `${doneCount} / ${totalCount}`;
+  const pct = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
 }
 
 function updateMemo(id, value) {
   const task = appData.tasks.find(t => t.id === id);
   if (task) task.memo = value;
-  // バッジ更新のみ（再描画しない）
   const toggle = document.querySelector(`[data-id="${id}"] .task-memo-toggle`);
   if (toggle) {
     const hasMemo = value.trim().length > 0;
@@ -840,6 +1264,7 @@ function deleteTask(id) {
   if (!confirm('このタスクを削除しますか？')) return;
   appData.tasks = appData.tasks.filter(t => t.id !== id);
   renderTasks();
+  renderCalendar();
   showFlash('🗑 タスクを削除しました');
 }
 
@@ -879,10 +1304,12 @@ function resetAll() {
   if (!confirm('全データをリセットしますか？\n（現在のタスクは消えます）')) return;
   appData = { date: '', tasks: [] };
   idCounter = 100;
+  selectedCalendarDay = null;
   document.getElementById('importSection').style.display = '';
   document.getElementById('dateSection').style.display = 'none';
   document.getElementById('fileInput').value = '';
   renderTasks();
+  renderCalendar();
   showFlash('🔄 リセットしました');
 }
 
@@ -894,6 +1321,118 @@ function showFlash(msg) {
   el.classList.add('show');
   if (flashTimer) clearTimeout(flashTimer);
   flashTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════
+// ── カレンダー機能 ──
+// ════════════════════════════════
+
+function toggleCalendar() {
+  calOpen = !calOpen;
+  document.getElementById('calBody').classList.toggle('open', calOpen);
+  document.getElementById('calToggleIcon').classList.toggle('open', calOpen);
+}
+
+function prevMonth() {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
+  renderCalendar();
+}
+
+function nextMonth() {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const todayStr = getTodayStr();
+
+  document.getElementById('calMonthLabel').textContent = `${year}年${month + 1}月`;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // タスクの日付ごとの件数を集計（未完了のみドット表示）
+  const taskDates = {};
+  appData.tasks.forEach(t => {
+    if (t.dueDate) {
+      if (!taskDates[t.dueDate]) taskDates[t.dueDate] = 0;
+      taskDates[t.dueDate]++;
+    }
+  });
+
+  // 空白セル（月初の曜日調整）
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-day empty';
+    grid.appendChild(empty);
+  }
+
+  // 日付セル
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayOfWeek = (firstDay + d - 1) % 7; // 0=Sun, 6=Sat
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === selectedCalendarDay;
+    const hasTasks = taskDates[dateStr] && taskDates[dateStr] > 0;
+
+    let classes = 'cal-day';
+    if (isToday) classes += ' today';
+    if (isSelected) classes += ' selected';
+    if (dayOfWeek === 0) classes += ' day-sun';
+    if (dayOfWeek === 6) classes += ' day-sat';
+
+    const cell = document.createElement('div');
+    cell.className = classes;
+    cell.innerHTML = `<span class="cal-day-num">${d}</span>${hasTasks ? '<span class="cal-dot"></span>' : ''}`;
+    cell.addEventListener('click', () => selectCalendarDay(dateStr));
+    grid.appendChild(cell);
+  }
+
+  // クリアボタン表示
+  document.getElementById('calClearBtn').style.display = selectedCalendarDay ? 'block' : 'none';
+  document.getElementById('calFilterBadge').style.display = selectedCalendarDay ? 'inline-flex' : 'none';
+}
+
+function selectCalendarDay(dateStr) {
+  if (selectedCalendarDay === dateStr) {
+    // 同じ日をタップ → フィルター解除
+    selectedCalendarDay = null;
+    showFlash('📅 絞り込みを解除しました');
+  } else {
+    selectedCalendarDay = dateStr;
+    const parts = dateStr.split('-');
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    showFlash(`📅 ${parseInt(parts[1])}/${parseInt(parts[2])}(${dayNames[dt.getDay()]}) に絞り込み`);
+  }
+  renderCalendar();
+  renderTasks();
+}
+
+function clearCalendarFilter() {
+  selectedCalendarDay = null;
+  renderCalendar();
+  renderTasks();
+  showFlash('📅 絞り込みを解除しました');
+}
+
+function updateFilterBanner() {
+  const banner = document.getElementById('filterBanner');
+  const bannerText = document.getElementById('filterBannerText');
+  if (selectedCalendarDay) {
+    const parts = selectedCalendarDay.split('-');
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    bannerText.textContent = `📅 ${parseInt(parts[0])}年${parseInt(parts[1])}月${parseInt(parts[2])}日(${dayNames[dt.getDay()]}) のタスク`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
 }
 </script>
 </body>
