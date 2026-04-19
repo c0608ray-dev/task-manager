@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>タスク管理 | 川島AI</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="タスク管理">
+<meta name="theme-color" content="#ffffff">
+<style>
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e2e6ea;
+  --text: #1a202c;
+  --text2: #64748b;
+  --text3: #94a3b8;
+
+  --high: #ef4444;
+  --high-bg: #fff5f5;
+  --high-border: #fecaca;
+  --high-badge: #fee2e2;
+
+  --mid: #f59e0b;
+  --mid-bg: #fffbf0;
+  --mid-border: #fde68a;
+  --mid-badge: #fef3c7;
+
+  --check: #3b82f6;
+  --check-bg: #eff6ff;
+  --check-border: #bfdbfe;
+  --check-badge: #dbeafe;
+
+  --daily: #6b7280;
+  --daily-bg: #f9fafb;
+  --daily-border: #e5e7eb;
+  --daily-badge: #f3f4f6;
+
+  --green: #10b981;
+  --green-bg: #ecfdf5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Helvetica Neue', 'BIZ UDPGothic', 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  min-height: 100vh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── ヘッダー ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.header-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+.date-badge {
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+/* ── メインコンテンツ ── */
+.main {
+  padding: 14px 14px 80px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── ステータスバー ── */
+.status-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 3px;
+}
+.stat-card.done .stat-num { color: var(--green); }
+
+/* ── インポートエリア ── */
+.import-section {
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.import-section:hover, .import-section.dragover {
+  border-color: var(--check);
+  background: var(--check-bg);
+}
+.import-section input[type="file"] { display: none; }
+.import-icon { font-size: 28px; margin-bottom: 6px; }
+.import-label { font-size: 14px; color: var(--text2); font-weight: 500; }
+.import-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+/* ── アクションボタン群 ── */
+.action-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-export {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+.btn-export:hover { opacity: 0.9; }
+.btn-reset {
+  background: var(--surface);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-reset:hover { background: #f1f5f9; }
+.btn-add {
+  background: var(--surface);
+  color: var(--check);
+  border: 1.5px solid var(--check-border);
+  width: 100%;
+  margin-bottom: 12px;
+}
+.btn-add:hover { background: var(--check-bg); }
+
+/* ── セクションヘッダー ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px 10px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-top: 12px;
+}
+.section-header:first-child { margin-top: 0; }
+.section-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+/* 優先度別カラー */
+.sec-high .section-header  { background: var(--high-bg);   border: 1px solid var(--high-border);  color: var(--high);  border-bottom: none; }
+.sec-mid  .section-header  { background: var(--mid-bg);    border: 1px solid var(--mid-border);   color: var(--mid);   border-bottom: none; }
+.sec-check .section-header { background: var(--check-bg);  border: 1px solid var(--check-border); color: var(--check); border-bottom: none; }
+.sec-daily .section-header { background: var(--daily-bg);  border: 1px solid var(--daily-border); color: var(--daily); border-bottom: none; }
+
+.sec-high  .section-badge  { background: var(--high-badge);  color: var(--high);  }
+.sec-mid   .section-badge  { background: var(--mid-badge);   color: var(--mid);   }
+.sec-check .section-badge  { background: var(--check-badge); color: var(--check); }
+.sec-daily .section-badge  { background: var(--daily-badge); color: var(--daily); }
+
+/* ── タスクカード ── */
+.task-list {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.sec-high  .task-list { border-color: var(--high-border);  }
+.sec-mid   .task-list { border-color: var(--mid-border);   }
+.sec-check .task-list { border-color: var(--check-border); }
+.sec-daily .task-list { border-color: var(--daily-border); }
+
+.task-item {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item.is-done { background: #fafbfc; }
+
+.task-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+/* カスタムチェックボックス */
+.task-checkbox {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  margin-top: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
+.task-checkbox.checked {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.task-checkbox svg { display: none; }
+.task-checkbox.checked svg { display: block; }
+
+.task-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+  flex: 1;
+  word-break: break-all;
+}
+.task-title.done-text {
+  text-decoration: line-through;
+  color: var(--text3);
+}
+
+.task-delete {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  transition: background 0.1s, color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.task-delete:hover { background: #fee2e2; color: var(--high); }
+
+/* メモ欄 */
+.task-memo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text3);
+  cursor: pointer;
+  margin-top: 8px;
+  margin-left: 35px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+.task-memo-toggle:hover { color: var(--text2); }
+.task-memo-toggle.has-memo { color: var(--check); border-color: var(--check-border); background: var(--check-bg); }
+
+.task-memo-area {
+  display: none;
+  margin-top: 8px;
+  margin-left: 35px;
+}
+.task-memo-area.open { display: block; }
+
+.task-memo {
+  width: 100%;
+  min-height: 72px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+.task-memo:focus { border-color: var(--check); background: var(--surface); }
+.task-memo::placeholder { color: var(--text3); }
+
+/* タスク追加フォーム */
+.add-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: none;
+}
+.add-form.open { display: block; }
+.add-form-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.add-inp {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.add-inp:focus { border-color: var(--check); }
+.add-select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 12px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.add-select:focus { border-color: var(--check); }
+.add-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-save-task {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-cancel-task {
+  background: var(--bg);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 空状態 */
+.empty-tasks {
+  padding: 20px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+/* ── フラッシュメッセージ ── */
+.flash {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a202c;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+.flash.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── プログレスバー ── */
+.progress-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 7px;
+  font-weight: 600;
+}
+.progress-bar-bg {
+  background: var(--bg);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  transition: width 0.4s ease;
+}
+
+/* ── 日付ヘッダー ── */
+.date-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.date-main { font-size: 14px; font-weight: 700; color: var(--text); }
+.date-id { font-size: 11px; color: var(--text3); }
+
+/* ── モバイル対応 ── */
+@media (max-width: 480px) {
+  .main { padding: 12px 10px 80px; }
+  .status-bar { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .stat-num { font-size: 19px; }
+  .stat-label { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-row">
+    <div class="header-left">
+      <div class="logo-icon">📋</div>
+      <div>
+        <div class="header-title">タスク管理</div>
+        <div class="header-sub">川島AI · Task Manager</div>
+      </div>
+    </div>
+    <div class="date-badge" id="headerDate">読み込み中...</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ステータスバー -->
+  <div class="status-bar">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">合計</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statHigh" style="color:var(--high)">0</div>
+      <div class="stat-label">🔴高</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statPending">0</div>
+      <div class="stat-label">未完了</div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-label">✅完了</div>
+    </div>
+  </div>
+
+  <!-- プログレスバー -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>進捗</span>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- JSONインポート -->
+  <div class="import-section" id="importSection" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".json">
+    <div class="import-icon">📂</div>
+    <div class="import-label">JSONファイルを読み込む</div>
+    <div class="import-sub">タップまたはファイルをドロップ</div>
+  </div>
+
+  <!-- 日付・エクスポート -->
+  <div class="date-section" id="dateSection" style="display:none">
+    <div>
+      <div class="date-main" id="dateMain">—</div>
+      <div class="date-id" id="dateId">ID: —</div>
+    </div>
+    <div style="font-size:12px;color:var(--text3)">読み込み済み</div>
+  </div>
+
+  <!-- アクションボタン -->
+  <div class="action-bar">
+    <button class="btn btn-export" onclick="exportJSON()">📤 JSONエクスポート</button>
+    <button class="btn btn-reset" onclick="resetAll()">🔄 リセット</button>
+  </div>
+
+  <!-- タスク追加ボタン -->
+  <button class="btn btn-add" onclick="toggleAddForm()">＋ タスクを追加</button>
+
+  <!-- タスク追加フォーム -->
+  <div class="add-form" id="addForm">
+    <div class="add-form-title">新規タスクを追加</div>
+    <input class="add-inp" type="text" id="newTaskTitle" placeholder="タスク内容を入力..." maxlength="200">
+    <select class="add-select" id="newTaskPriority">
+      <option value="high">🔴 高優先</option>
+      <option value="mid" selected>🟡 中優先</option>
+      <option value="check">🔵 要確認</option>
+      <option value="daily">📆 毎日</option>
+    </select>
+    <div class="add-btn-row">
+      <button class="btn-save-task" onclick="addTask()">追加する</button>
+      <button class="btn-cancel-task" onclick="toggleAddForm()">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- タスクリスト -->
+  <div id="taskContainer"></div>
+
+</div>
+
+<!-- フラッシュメッセージ -->
+<div class="flash" id="flash"></div>
+
+<script>
+// ── データ管理 ──
+let appData = { date: '', tasks: [] };
+let idCounter = 100;
+
+const PRIORITY_CONFIG = {
+  high:  { label: '🔴 高優先', sectionClass: 'sec-high',  order: 0 },
+  mid:   { label: '🟡 中優先', sectionClass: 'sec-mid',   order: 1 },
+  check: { label: '🔵 要確認', sectionClass: 'sec-check', order: 2 },
+  daily: { label: '📆 毎日',   sectionClass: 'sec-daily', order: 3 },
+};
+
+// ── 初期化 ──
+document.addEventListener('DOMContentLoaded', () => {
+  updateHeaderDate();
+  renderTasks();
+
+  // ファイル入力
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) importJSON(e.target.files[0]);
+  });
+
+  // ドラッグ&ドロップ
+  const importSection = document.getElementById('importSection');
+  importSection.addEventListener('dragover', e => { e.preventDefault(); importSection.classList.add('dragover'); });
+  importSection.addEventListener('dragleave', () => importSection.classList.remove('dragover'));
+  importSection.addEventListener('drop', e => {
+    e.preventDefault();
+    importSection.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) importJSON(e.dataTransfer.files[0]);
+  });
+});
+
+function updateHeaderDate() {
+  const now = new Date();
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  const str = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]})`;
+  document.getElementById('headerDate').textContent = str;
+}
+
+// ── JSONインポート ──
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.tasks || !Array.isArray(data.tasks)) throw new Error('tasksが見つかりません');
+      appData = data;
+      // idカウンター更新
+      const maxId = Math.max(0, ...data.tasks.map(t => parseInt(t.id) || 0));
+      idCounter = maxId + 1;
+      // メモエリア状態リセット
+      renderTasks();
+      showDateSection(data.date || '');
+      showFlash('✅ JSONを読み込みました');
+    } catch (err) {
+      showFlash('❌ 読み込み失敗：' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function showDateSection(dateStr) {
+  document.getElementById('importSection').style.display = 'none';
+  const ds = document.getElementById('dateSection');
+  ds.style.display = 'flex';
+  document.getElementById('dateMain').textContent = dateStr ? `📅 ${dateStr}` : '日付なし';
+  document.getElementById('dateId').textContent = `タスク数: ${appData.tasks.length}件`;
+}
+
+// ── タスク追加フォーム ──
+let addFormOpen = false;
+function toggleAddForm() {
+  addFormOpen = !addFormOpen;
+  document.getElementById('addForm').classList.toggle('open', addFormOpen);
+  if (addFormOpen) document.getElementById('newTaskTitle').focus();
+}
+
+function addTask() {
+  const title = document.getElementById('newTaskTitle').value.trim();
+  if (!title) { showFlash('⚠️ タスク内容を入力してください'); return; }
+  const priority = document.getElementById('newTaskPriority').value;
+  const newTask = {
+    id: String(idCounter++),
+    priority,
+    title,
+    done: false,
+    memo: ''
+  };
+  appData.tasks.push(newTask);
+  document.getElementById('newTaskTitle').value = '';
+  addFormOpen = false;
+  document.getElementById('addForm').classList.remove('open');
+  renderTasks();
+  if (!document.getElementById('dateSection').style.display || document.getElementById('dateSection').style.display === 'none') {
+    document.getElementById('importSection').style.display = 'none';
+    showDateSection(getTodayStr());
+  }
+  showFlash('✅ タスクを追加しました');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && addFormOpen && document.activeElement.id === 'newTaskTitle') addTask();
+});
+
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
+// ── タスク描画 ──
+function renderTasks() {
+  const container = document.getElementById('taskContainer');
+  container.innerHTML = '';
+
+  const priorities = ['high', 'mid', 'check', 'daily'];
+  let totalCount = 0;
+  let doneCount = 0;
+  let highCount = 0;
+
+  priorities.forEach(p => {
+    const tasks = appData.tasks.filter(t => t.priority === p);
+    const cfg = PRIORITY_CONFIG[p];
+
+    const doneInSection = tasks.filter(t => t.done).length;
+    totalCount += tasks.length;
+    doneCount += doneInSection;
+    if (p === 'high') highCount = tasks.filter(t => !t.done).length;
+
+    const section = document.createElement('div');
+    section.className = cfg.sectionClass;
+    section.innerHTML = `
+      <div class="section-header">
+        <span>${cfg.label}</span>
+        <span class="section-badge">${doneInSection}/${tasks.length}</span>
+      </div>
+    `;
+
+    const taskList = document.createElement('div');
+    taskList.className = 'task-list';
+
+    if (tasks.length === 0) {
+      taskList.innerHTML = '<div class="empty-tasks">タスクなし</div>';
+    } else {
+      tasks.forEach(task => {
+        taskList.appendChild(createTaskEl(task));
+      });
+    }
+
+    section.appendChild(taskList);
+    container.appendChild(section);
+  });
+
+  // 統計更新
+  document.getElementById('statTotal').textContent = totalCount;
+  document.getElementById('statHigh').textContent = highCount;
+  document.getElementById('statPending').textContent = totalCount - doneCount;
+  document.getElementById('statDone').textContent = doneCount;
+  document.getElementById('progressText').textContent = `${doneCount} / ${totalCount}`;
+  const pct = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('dateId').textContent = `タスク数: ${totalCount}件`;
+}
+
+function createTaskEl(task) {
+  const item = document.createElement('div');
+  item.className = 'task-item' + (task.done ? ' is-done' : '');
+  item.dataset.id = task.id;
+
+  const hasMemo = task.memo && task.memo.trim().length > 0;
+
+  item.innerHTML = `
+    <div class="task-top">
+      <div class="task-checkbox ${task.done ? 'checked' : ''}" onclick="toggleDone('${task.id}')">
+        <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="task-title ${task.done ? 'done-text' : ''}">${escapeHtml(task.title)}</div>
+      <button class="task-delete" onclick="deleteTask('${task.id}')" title="削除">✕</button>
+    </div>
+    <div>
+      <span class="task-memo-toggle ${hasMemo ? 'has-memo' : ''}" onclick="toggleMemo('${task.id}')">
+        💬 ${hasMemo ? 'メモあり' : 'メモ追加'}
+      </span>
+      <div class="task-memo-area ${hasMemo ? 'open' : ''}" id="memoArea_${task.id}">
+        <textarea class="task-memo" placeholder="メモ・コメントを入力..." oninput="updateMemo('${task.id}', this.value)">${escapeHtml(task.memo || '')}</textarea>
+      </div>
+    </div>
+  `;
+  return item;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── タスク操作 ──
+function toggleDone(id) {
+  const task = appData.tasks.find(t => t.id === id);
+  if (!task) return;
+  task.done = !task.done;
+  renderTasks();
+}
+
+function updateMemo(id, value) {
+  const task = appData.tasks.find(t => t.id === id);
+  if (task) task.memo = value;
+  // バッジ更新のみ（再描画しない）
+  const toggle = document.querySelector(`[data-id="${id}"] .task-memo-toggle`);
+  if (toggle) {
+    const hasMemo = value.trim().length > 0;
+    toggle.textContent = `💬 ${hasMemo ? 'メモあり' : 'メモ追加'}`;
+    toggle.classList.toggle('has-memo', hasMemo);
+  }
+}
+
+function toggleMemo(id) {
+  const area = document.getElementById('memoArea_' + id);
+  if (!area) return;
+  const isOpen = area.classList.toggle('open');
+  if (isOpen) {
+    const textarea = area.querySelector('textarea');
+    if (textarea) textarea.focus();
+  }
+}
+
+function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  appData.tasks = appData.tasks.filter(t => t.id !== id);
+  renderTasks();
+  showFlash('🗑 タスクを削除しました');
+}
+
+// ── JSONエクスポート ──
+function exportJSON() {
+  // メモをDOMから同期
+  appData.tasks.forEach(task => {
+    const area = document.getElementById('memoArea_' + task.id);
+    if (area) {
+      const ta = area.querySelector('textarea');
+      if (ta) task.memo = ta.value;
+    }
+  });
+
+  const today = getTodayStr();
+  const exportData = {
+    date: appData.date || today,
+    exported_at: new Date().toISOString(),
+    tasks: appData.tasks
+  };
+
+  const json = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tasks_${today}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showFlash('📤 エクスポートしました');
+}
+
+// ── リセット ──
+function resetAll() {
+  if (!confirm('全データをリセットしますか？\n（現在のタスクは消えます）')) return;
+  appData = { date: '', tasks: [] };
+  idCounter = 100;
+  document.getElementById('importSection').style.display = '';
+  document.getElementById('dateSection').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  renderTasks();
+  showFlash('🔄 リセットしました');
+}
+
+// ── フラッシュメッセージ ──
+let flashTimer = null;
+function showFlash(msg) {
+  const el = document.getElementById('flash');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (flashTimer) clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
