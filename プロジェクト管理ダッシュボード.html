@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>アプリ開発 ダッシュボード</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dev Dashboard">
+<meta name="theme-color" content="#0a0f1a">
+<style>
+:root {
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --accent: #3b82f6;
+  --accent2: #60a5fa;
+  --green: #22c55e;
+  --green-bg: #052e16;
+  --green-border: #166534;
+  --orange: #f59e0b;
+  --orange-bg: #1c1003;
+  --orange-border: #78350f;
+  --red: #ef4444;
+  --red-bg: #1f0707;
+  --red-border: #7f1d1d;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #475569;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Helvetica Neue', 'BIZ UDPGothic', 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── ヘッダー ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.header-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.header-sub { font-size: 11px; color: var(--text2); margin-top: 1px; letter-spacing: 1px; }
+.date-badge {
+  font-size: 11px; color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+/* ── 報告ボックス ── */
+.report-section { padding: 16px 16px 0; }
+.report-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.report-header {
+  background: var(--surface2);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.report-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text2); text-transform: uppercase; }
+.report-body { padding: 12px 14px; }
+.report-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+.report-item:last-child { margin-bottom: 0; }
+.report-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.dot-none { background: var(--text3); }
+.dot-green { background: var(--green); }
+.dot-orange { background: var(--orange); }
+.dot-red { background: var(--red); }
+
+/* ── セクションタイトル ── */
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  padding: 16px 16px 8px;
+}
+
+/* ── アプリカード ── */
+.apps-grid { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.app-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  color: var(--text);
+}
+.app-card:hover { border-color: var(--accent); background: #111d30; }
+.app-card:active { background: #0d1828; }
+
+.app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.app-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.app-meta { flex: 1; min-width: 0; }
+.app-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-desc { font-size: 12px; color: var(--text2); }
+
+.status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+.badge-active { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-dev { background: #1e0a5e; color: #a78bfa; border: 1px solid #4c1d95; }
+.badge-free { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-border); }
+.badge-tool { background: #0c1a2e; color: var(--accent2); border: 1px solid #1e3a5e; }
+
+.app-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px;
+  color: var(--text3);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.app-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+.stat { background: var(--surface2); border-radius: 8px; padding: 8px; text-align: center; }
+.stat-val { font-size: 16px; font-weight: 700; color: var(--accent2); }
+.stat-lbl { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* ── PHASE バナー ── */
+.phase-banner {
+  margin: 16px 16px 0;
+  background: linear-gradient(135deg, #0f1e3c, #1a1040);
+  border: 1px solid #2563eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.phase-icon { font-size: 24px; }
+.phase-text { flex: 1; }
+.phase-title { font-size: 13px; font-weight: 700; color: #93c5fd; margin-bottom: 2px; }
+.phase-sub { font-size: 12px; color: var(--text2); }
+.phase-tag {
+  background: #1e3a8a;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ── 区切り ── */
+.spacer { height: 80px; }
+
+/* ── フッター ── */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.footer-text { font-size: 12px; color: var(--text3); }
+.skill-badge {
+  font-size: 10px;
+  color: #a78bfa;
+  background: #1e0a5e;
+  border: 1px solid #4c1d95;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 700;
+}
+
+/* ── アニメーション ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.app-card { animation: fadeIn 0.3s ease forwards; }
+.app-card:nth-child(1) { animation-delay: 0.05s; }
+.app-card:nth-child(2) { animation-delay: 0.1s; }
+.app-card:nth-child(3) { animation-delay: 0.15s; }
+.app-card:nth-child(4) { animation-delay: 0.2s; }
+.app-card:nth-child(5) { animation-delay: 0.25s; }
+.app-card:nth-child(6) { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- ── ヘッダー ── -->
+<div class="header">
+  <div class="header-row">
+    <div class="header-logo">
+      <div class="logo-icon">🛠️</div>
+      <div>
+        <div class="header-title">アプリ開発 ダッシュボード</div>
+        <div class="header-sub">川島AI / 開発管理</div>
+      </div>
+    </div>
+    <div class="date-badge" id="today-date">—</div>
+  </div>
+</div>
+
+<!-- ── PHASE バナー ── -->
+<div class="phase-banner">
+  <div class="phase-icon">🚀</div>
+  <div class="phase-text">
+    <div class="phase-title">現在フェーズ: PHASE 1</div>
+    <div class="phase-sub">既存アプリの安定運用 ＋ 機能改善</div>
+  </div>
+  <div class="phase-tag">PHASE 1</div>
+</div>
+
+<!-- ── 完了報告ボックス ── -->
+<div class="report-section">
+  <div class="report-box">
+    <div class="report-header">
+      <span style="font-size:14px;">📋</span>
+      <span class="report-label">完了報告 — common-report-skill デモ</span>
+    </div>
+    <div class="report-body">
+      <div class="report-item">
+        <div class="report-dot dot-green"></div>
+        <span><strong style="color:#22c55e">🟢 完了済み</strong> — ワークスペース内の全アプリ（6ファイル）をスキャン・分析</span>
+      </div>
+      <div class="report-item">
+        <div class="report-dot dot-green"></div>
+        <span>プロジェクト管理ダッシュボードを生成 ＋ common-report-skill フォーマットで報告</span>
+      </div>
+      <div class="report-item">
+        <div class="report-dot dot-orange"></div>
+        <span><strong style="color:#f59e0b">🟡 確認事項</strong> — 配送日報アプリが3バリアント存在（kawashima_nichiho-4 / haisonikko_free / 配送日報アプリ）。統合・整理の検討余地あり</span>
+      </div>
+      <div class="report-item">
+        <div class="report-dot dot-none"></div>
+        <span><strong style="color:#64748b">🔴 要対応</strong> — なし（現時点で緊急対応不要）</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── アプリ一覧 ── -->
+<div class="section-title">MANAGED APPS</div>
+<div class="apps-grid">
+
+  <!-- 配送日報（川島運輸） -->
+  <a class="app-card" href="kawashima_nichiho-4.html">
+    <div class="app-header">
+      <div class="app-icon" style="background:linear-gradient(135deg,#1a2e18,#2d4a28);">🚚</div>
+      <div class="app-meta">
+        <div class="app-name">川島運輸 配送日報</div>
+        <div class="app-desc">kawashima_nichiho-4.html</div>
+      </div>
+      <span class="status-badge badge-active">稼働中</span>
+    </div>
+    <div class="app-tags">
+      <span class="tag">PWA対応</span>
+      <span class="tag">iOS対応</span>
+      <span class="tag">ダークグリーン</span>
+      <span class="tag">メインアプリ</span>
+    </div>
+    <div class="app-stats">
+      <div class="stat"><div class="stat-val">2,253</div><div class="stat-lbl">行</div></div>
+      <div class="stat"><div class="stat-val">PWA</div><div class="stat-lbl">タイプ</div></div>
+      <div class="stat"><div class="stat-val">v4</div><div class="stat-lbl">バージョン</div></div>
+    </div>
+  </a>
+
+  <!-- 配送日報 Free -->
+  <a class="app-card" href="haisonikko_free.html">
+    <div class="app-header">
+      <div class="app-icon" style="background:linear-gradient(135deg,#2d1a04,#4a2d08);">📦</div>
+      <div class="app-meta">
+        <div class="app-name">配送日報 Free</div>
+        <div class="app-desc">haisonikko_free.html</div>
+      </div>
+      <span class="status-badge badge-free">汎用版</span>
+    </div>
+    <div class="app-tags">
+      <span class="tag">PWA対応</span>
+      <span class="tag">オレンジUI</span>
+      <span class="tag">汎用ドライバー向け</span>
+    </div>
+    <div class="app-stats">
+      <div class="stat"><div class="stat-val">2,142</div><div class="stat-lbl">行</div></div>
+      <div class="stat"><div class="stat-val">Free</div><div class="stat-lbl">エディション</div></div>
+      <div class="stat"><div class="stat-val">汎用</div><div class="stat-lbl">対象</div></div>
+    </div>
+  </a>
+
+  <!-- 配送日報アプリ -->
+  <a class="app-card" href="配送日報アプリ.html">
+    <div class="app-header">
+      <div class="app-icon" style="background:linear-gradient(135deg,#2d1a04,#4a2d08);">🗒️</div>
+      <div class="app-meta">
+        <div class="app-name">配送日報アプリ</div>
+        <div class="app-desc">配送日報アプリ.html</div>
+      </div>
+      <span class="status-badge badge-free">別バリアント</span>
+    </div>
+    <div class="app-tags">
+      <span class="tag">PWA対応</span>
+      <span class="tag">オレンジUI</span>
+    </div>
+    <div class="app-stats">
+      <div class="stat"><div class="stat-val">1,746</div><div class="stat-lbl">行</div></div>
+      <div class="stat"><div class="stat-val">HTML</div><div class="stat-lbl">タイプ</div></div>
+      <div class="stat"><div class="stat-val">—</div><div class="stat-lbl">バージョン</div></div>
+    </div>
+  </a>
+
+  <!-- 経費管理 -->
+  <a class="app-card" href="keihi-nikko2.html">
+    <div class="app-header">
+      <div class="app-icon" style="background:linear-gradient(135deg,#0c1a2e,#0e2d4a);">💴</div>
+      <div class="app-meta">
+        <div class="app-name">経費日航</div>
+        <div class="app-desc">keihi-nikko2.html</div>
+      </div>
+      <span class="status-badge badge-tool">ツール</span>
+    </div>
+    <div class="app-tags">
+      <span class="tag">軽貨物ドライバー向け</span>
+      <span class="tag">経費管理</span>
+      <span class="tag">ブルーUI</span>
+    </div>
+    <div class="app-stats">
+      <div class="stat"><div class="stat-val">587</div><div class="stat-lbl">行</div></div>
+      <div class="stat"><div class="stat-val">v2</div><div class="stat-lbl">バージョン</div></div>
+      <div class="stat"><div class="stat-val">確定申告</div><div class="stat-lbl">用途</div></div>
+    </div>
+  </a>
+
+  <!-- X投稿マネージャー -->
+  <a class="app-card" href="x-post-manager.html">
+    <div class="app-header">
+      <div class="app-icon" style="background:linear-gradient(135deg,#0e0e10,#18181c);">𝕏</div>
+      <div class="app-meta">
+        <div class="app-name">X投稿マネージャー</div>
+        <div class="app-desc">x-post-manager.html</div>
+      </div>
+      <span class="status-badge badge-tool">ツール</span>
+    </div>
+    <div class="app-tags">
+      <span class="tag">SNS運用</span>
+      <span class="tag">TASKWEAR</span>
+      <span class="tag">投稿管理</span>
+    </div>
+    <div class="app-stats">
+      <div class="stat"><div class="stat-val">600</div><div class="stat-lbl">行</div></div>
+      <div class="stat"><div class="stat-val">HTML</div><div class="stat-lbl">タイプ</div></div>
+      <div class="stat"><div class="stat-val">SNS</div><div class="stat-lbl">用途</div></div>
+    </div>
+  </a>
+
+  <!-- 配送メモ (React) -->
+  <div class="app-card" style="cursor:default;">
+    <div class="app-header">
+      <div class="app-icon" style="background:linear-gradient(135deg,#0c1a3a,#0e3060);">⚛️</div>
+      <div class="app-meta">
+        <div class="app-name">配送メモ (React)</div>
+        <div class="app-desc">haiso-memo.jsx</div>
+      </div>
+      <span class="status-badge badge-dev">開発中</span>
+    </div>
+    <div class="app-tags">
+      <span class="tag">React JSX</span>
+      <span class="tag">コンポーネント</span>
+      <span class="tag">組込み用</span>
+    </div>
+    <div class="app-stats">
+      <div class="stat"><div class="stat-val">322</div><div class="stat-lbl">行</div></div>
+      <div class="stat"><div class="stat-val">JSX</div><div class="stat-lbl">タイプ</div></div>
+      <div class="stat"><div class="stat-val">WIP</div><div class="stat-lbl">状態</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── 今後の開発予定 ── -->
+<div class="section-title" style="margin-top:8px;">ROADMAP</div>
+<div style="padding:0 16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">🚗</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">車輌管理アプリ</div>
+          <div style="font-size:11px;color:var(--text3);">開発予定</div>
+        </div>
+        <span style="font-size:10px;background:#1a1040;color:#7c3aed;border:1px solid #4c1d95;border-radius:4px;padding:2px 8px;font-weight:700;">PLANNED</span>
+      </div>
+      <div style="height:1px;background:var(--border);"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">📋</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">汎用日報アプリ</div>
+          <div style="font-size:11px;color:var(--text3);">開発予定</div>
+        </div>
+        <span style="font-size:10px;background:#1a1040;color:#7c3aed;border:1px solid #4c1d95;border-radius:4px;padding:2px 8px;font-weight:700;">PLANNED</span>
+      </div>
+      <div style="height:1px;background:var(--border);"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">👗</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">TASKWEAR 販売管理</div>
+          <div style="font-size:11px;color:var(--text3);">開発予定</div>
+        </div>
+        <span style="font-size:10px;background:#1a1040;color:#7c3aed;border:1px solid #4c1d95;border-radius:4px;padding:2px 8px;font-weight:700;">PLANNED</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="spacer"></div>
+
+<!-- ── フッター ── -->
+<div class="footer">
+  <span class="footer-text">powered by</span>
+  <span class="skill-badge">common-report-skill</span>
+  <span class="footer-text">+ Claude AI</span>
+</div>
+
+<script>
+// 日付表示
+const d = new Date();
+const fmt = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+document.getElementById('today-date').textContent = fmt;
+</script>
+</body>
+</html>
