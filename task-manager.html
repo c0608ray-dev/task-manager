@@ -1415,7 +1415,7 @@ function updateStats() {
 }
 
 function updateMemo(id, value) {
-  const task = appData.tasks.find(t => t.id === id);
+  const task = appData.tasks.find(t => String(t.id) === String(id));
   if (task) task.memo = value;
   const toggle = document.querySelector(`[data-id="${id}"] .task-memo-toggle`);
   if (toggle) {
@@ -1437,7 +1437,7 @@ function toggleMemo(id) {
 
 function deleteTask(id) {
   if (!confirm('このタスクを削除しますか？')) return;
-  appData.tasks = appData.tasks.filter(t => t.id !== id);
+  appData.tasks = appData.tasks.filter(t => String(t.id) !== String(id));
   renderTasks();
   renderCalendar();
   showFlash('🗑 タスクを削除しました');
@@ -1457,7 +1457,7 @@ function exportJSON() {
   const today = getTodayStr();
   const exportData = {
     date: appData.date || today,
-    exported_at: new Date().toISOString(),
+    exported_at: getTodayStr() + 'T' + new Date().toLocaleTimeString('ja-JP'),
     tasks: appData.tasks
   };
 
